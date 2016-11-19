@@ -101,8 +101,10 @@ RUN if [ ${INSTALL_MEMCACHED} = true ]; then \
 
 ARG INSTALL_AEROSPIKE_EXTENSION=false
 ENV INSTALL_AEROSPIKE_EXTENSION ${INSTALL_AEROSPIKE_EXTENSION}
-# Copy aerospike configration for remote debugging
-COPY ./aerospike.ini /usr/local/etc/php/conf.d/aerospike.ini
+# Copy aerospike configuration for remote debugging
+# copy first to the root of the container to avoid PHP Warning about trying to load unknown extension when INSTALL_AEROSPIKE_EXTENSION is false.
+# When INSTALL_AEROSPIKE_EXTENSION is true the file will be move to their correct location
+COPY ./aerospike.ini /aerospike.ini
 RUN if [ ${INSTALL_AEROSPIKE_EXTENSION} = true ]; then \
     # Install the php aerospike extension
     curl -L -o /tmp/aerospike-client-php.tar.gz "https://github.com/luciano-jr/aerospike-client-php/archive/master.tar.gz" \
@@ -113,6 +115,7 @@ RUN if [ ${INSTALL_AEROSPIKE_EXTENSION} = true ]; then \
         && phpize \
         && ./build.sh \
         && make install \
+        && mv /aerospike.ini /usr/local/etc/php/conf.d/aerospike.ini \
     ) \
     && rm /tmp/aerospike-client-php.tar.gz \
 ;fi
@@ -120,14 +123,20 @@ RUN if [ ${INSTALL_AEROSPIKE_EXTENSION} = true ]; then \
 #####################################
 # Opcache:
 #####################################
+
+# Copy opcache configration
+# copy first to the root of the container to avoid PHP Warning about trying to load unknown extension when INSTALL_OPCACHE is false.
+# When INSTALL_OPCACHE is true the file will be move to their correct location.
+COPY ./opcache.ini /opcache.ini
+
 ARG INSTALL_OPCACHE=false
 RUN if [ ${INSTALL_OPCACHE} = true ]; then \
     docker-php-ext-install opcache && \
-    docker-php-ext-enable opcache \
+    docker-php-ext-enable opcache && \
+    mv /opcache.ini /usr/local/etc/php/conf.d/opcache.ini \
 ;fi
 
-# Copy opcache configration
-COPY ./opcache.ini /usr/local/etc/php/conf.d/opcache.ini
+
 
 #####################################
 # Codeigniter Modifications:

@@ -4,7 +4,7 @@
 
 [![Gitter](https://badges.gitter.im/LaraDock/laradock.svg)](https://gitter.im/LaraDock/laradock?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-Laradock is a Docker PHP development environment. It facilitate running **PHP** Apps on **Docker**. 
+Laradock is a Docker PHP development environment. It facilitate running **PHP** Apps on **Docker**.
 
 Laradock is configured to run Laravel Apps by default, and it can be modifyed to run all kinds of PHP Apps (Symfony, Codeigniter, Wordpress, Drupal...).
 
@@ -16,6 +16,7 @@ Laradock is configured to run Laravel Apps by default, and it can be modifyed to
 	- [English (Default)](#)
 	- [Chinese](https://github.com/LaraDock/laradock/blob/master/README-zh.md)
 - [Intro](#Intro)
+	- [Usage Overview](#usage-overview)
 	- [Features](#features)
 	- [Supported Software](#Supported-Containers)
 	- [What is Docker](#what-is-docker)
@@ -80,19 +81,44 @@ Laradock strives to make the PHP development experience easier and faster.
 
 It contains pre-packaged Docker Images that provides you a wonderful *development* environment without requiring you to install PHP, NGINX, MySQL, REDIS, and any other software on your machines.
 
-
-**Usage Overview:** 
+<a name="usage-overview"></a>
+# Usage Overview
 
 Let's see how easy it is to install `NGINX`, `PHP`, `Composer`, `MySQL` and `Redis`. Then run `Laravel`.
 
-1. Get LaraDock inside your Laravel project: 
-<br>
-`git clone https://github.com/LaraDock/laradock.git`.
-2. Enter the laradock folder and run only these Containers: 
+#### Preparation
+
+Open your shell in the root of your Laravel project and copy paste this code to it:
+
+```bash
+git clone https://github.com/LaraDock/laradock.git
+cp laradock/.env-example laradock/.env
+mv .env .env-old
+ln -s laradock/.env
+cd laradock
+```
+
+#### Environment Setup
+
+* Manually update the new `.env` file in the **Laravel Specific** section with the values from your old file `.env-old`.
+* Please do not update DB_PORT value, read the comments on the file carefully.
+* The DB_HOST value should only be changed to match the database you want to use from Docker Compose.
+* Free to change any other values to match your needs like any of the default values in section **Docker Compose**.
+
+#### Running Containers
+
+Some examples...
+
+1. To run Php 7.0 + Nginx + Mysql 5.6 + Redis:
 <br>
 `docker-compose up -d nginx mysql redis`
-3. Open your `.env` file and set `DB_HOST` to `mysql` and `REDIS_HOST` to `redis`.
-4. Open your browser and visit the localhost: `http://localdock`
+
+2. To run Php 7.0 + Apache + Mysql 5.6 + Redis
+<br>
+`docker-compose up -d apache2 mysql redis`
+
+
+Open your browser and visit `http://localhost` to see the initial page.
 
 
 
@@ -248,7 +274,7 @@ Note: In this case the folder structure will be like this:
 	- myProject
 ```
 
-2 - Edit the `docker-compose.yml` file to map to your project directory once you have it (example: `- ../myProject:/var/www`). 
+2 - Edit the `docker-compose.yml` file to map to your project directory once you have it (example: `- ../myProject:/var/www`).
 
 3 - Stop and re-run your docker-compose command for the changes to take place.
 
@@ -462,33 +488,24 @@ docker-compose exec mysql bash
 
 <br>
 <a name="Edit-Container"></a>
-### Edit default container configuration
-Open the `docker-compose.yml` and change anything you want.
+### Edit Environment file configuration
+Open the `.env` and change anything you want.
 
 Examples:
 
-Change MySQL Database Name:
+Change MySQL Database Credentials:
 
-```yml
-    environment:
-        MYSQL_DATABASE: laradock
-    ...
+```
+DB_DATABASE=another-database
+DB_USERNAME=another-user
+DB_PASSWORD=another-password
 ```
 
 Change Redis defaut port to 1111:
 
-```yml
-    ports:
-        - "1111:6379"
-    ...
 ```
-
-
-
-
-
-
-
+REDIS_PORT=1111
+```
 
 <br>
 <a name="Edit-a-Docker-Image"></a>
@@ -506,12 +523,6 @@ example for `mysql` it will be `mysql/Dockerfile`.
 docker-compose build mysql
 ```
 More info on Containers rebuilding [here](#Build-Re-build-Containers).
-
-
-
-
-
-
 
 
 <br>
@@ -737,7 +748,7 @@ To controll the behavior of xDebug (in the `php-fpm` Container), you can run the
 <a name="LaraDock-for-Production"></a>
 ### Prepare LaraDock for Production
 
-It's recommended for production to create a custom `docker-compose.yml` file. For that reason LaraDock is shipped with `production-docker-compose.yml` which should contain only the containers you are planning to run on production (usage exampe: `docker-compose -f production-docker-compose.yml up -d nginx mysql redis ...`). 
+It's recommended for production to create a custom `docker-compose.yml` file. For that reason LaraDock is shipped with `production-docker-compose.yml` which should contain only the containers you are planning to run on production (usage exampe: `docker-compose -f production-docker-compose.yml up -d nginx mysql redis ...`).
 
 Note: The Database (MySQL/MariaDB/...) ports should not be forwarded on production, because Docker will automatically publish the port on the host, which is quite insecure, unless specifically told not to. So make sure to remove these lines:
 
@@ -1129,7 +1140,7 @@ Make sure you [change the timezone](#Change-the-timezone) if you don't want to u
 
 <a name="Workspace-ssh"></a>
 ### Access workspace via ssh
- 
+
 You can access the `workspace` container through `localhost:2222` by setting the `INSTALL_WORKSPACE_SSH` build argument to `true`.
 
 To change the default forwarded port for ssh:
@@ -1171,7 +1182,7 @@ The default username and password for the root mysql user are `root` and `root `
 Modify the `mysql/my.cnf` file to set your port number, `1234` is used as an example.
 
 ```
-[mysqld] 
+[mysqld]
 port=1234
 ```
 
@@ -1371,7 +1382,7 @@ Make sure the ports for the services that you are trying to run (22, 80, 443, 33
 
 #### I get Nginx error 404 Not Found on Windows.
 
-1. Go to docker Settings on your Windows machine. 
+1. Go to docker Settings on your Windows machine.
 2. Click on the `Shared Drives` tab and check the drive that contains your project files.
 3. Enter your windows username and password.
 4. Go to the `reset` tab and click restart docker.
@@ -1401,7 +1412,7 @@ Moving from Docker Toolbox (VirtualBox) to Docker Native (for Mac/Windows). Requ
 3. Upgrade LaraDock to `v4.*.*` (`git pull origin master`)
 4. Use LaraDock as you used to do: `docker-compose up -d nginx mysql`.
 
-**Note:** If you face any problem with the last step above: rebuild all your containers 
+**Note:** If you face any problem with the last step above: rebuild all your containers
 `docker-compose build --no-cache`
 "Warnning Containers Data might be lost!"
 
