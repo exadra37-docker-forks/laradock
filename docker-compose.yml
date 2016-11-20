@@ -9,18 +9,18 @@ services:
 ### Applications Code Container #############################
 
     applications:
-        image: tianon/true
-        container_name: applications
+        image: ${APPLICATIONS_IMAGE_NAME}
+        container_name: ${APPLICATIONS_CONTAINER_NAME}
         volumes:
-            - ${HOST_WORK_DIR}:/var/www
+            - ${APPLICATIONS_HOST_DIR}:/var/www
         networks:
-            - laradock
+            - ${APPLICATIONS_NETWORK_NAME}
 
 ### Workspace Utilities Container ###########################
 
     workspace:
         build:
-            context: ./workspace
+            context: ${WORKSPACE_BUILD_PATH}
             args:
                 - INSTALL_XDEBUG=${WORKSPACE_INSTALL_XDEBUG}
                 - INSTALL_MONGO=${WORKSPACE_INSTALL_MONGO}
@@ -33,8 +33,8 @@ services:
                 - PUID=${WORKSPACE_PUID}
                 - PGID=${WORKSPACE_PGID}
                 - NODE_VERSION=${WORKSPACE_NODE_VERSION}
-                - TZ=${WORKSPACE_TZ}
-        container_name: workspace
+                - TZ=${WORKSPACE_TIMEZONE}
+        container_name: ${WORKSPACE_CONTAINER_NAME}
         volumes_from:
             - applications
         extra_hosts:
@@ -44,13 +44,13 @@ services:
            - "${WORKSPACE_SSH_PORT}:22"
         tty: true
         networks:
-            - laradock
+            - ${WORKSPACE_NETWORK_NAME}
 
 ### PHP-FPM Container #######################################
 
     php-fpm:
         build:
-            context: ./php-fpm
+            context: ${PHP_FPM_BUILD_PATH}
             args:
                 - INSTALL_XDEBUG=${PHP_FPM_INSTALL_XDEBUG}
                 - INSTALL_MONGO=${PHP_FPM_INSTALL_MONGO}
@@ -59,8 +59,8 @@ services:
                 - INSTALL_OPCACHE=${PHP_FPM_INSTALL_OPCACHE}
                 - INSTALL_AEROSPIKE_EXTENSION=${PHP_FPM_INSTALL_AEROSPIKE_EXTENSION}
                 - CODEIGNITER=${PHP_FPM_CODEIGNITER}
-            dockerfile: ${PHP_FPM_DOCKER_FILE}
-        container_name: php-fpm
+            dockerfile: ./versions/${PHP_VERSION}/Dockerfile
+        container_name: ${PHP_FPM_CONTAINER_NAME}
         volumes_from:
             - applications
         expose:
@@ -74,16 +74,16 @@ services:
             # IMPORTANT: Set the Remote Interpreter entry matching name to `laravel`
             - PHP_IDE_CONFIG=${PHP_FPM_IDE_CONFIG}
         networks:
-            - laradock
+            - ${PHP_FPM_NETWORK_NAME}
 
 ### Nginx Server Container ##################################
 
     nginx:
         build:
-            context: ./nginx
+            context: ${NGINX_BUILD_PATH}
             args:
-                - PHP_UPSTREAM=php-fpm
-        container_name: nginx
+                - PHP_UPSTREAM=${PHP_INTERPRETER}
+        container_name: ${NGINX_CONTAINER_NAME}
         volumes_from:
             - applications
         volumes:
@@ -92,18 +92,18 @@ services:
             - "${NGINX_HOST_HTTP_PORT}:80"
             - "${NGINX_HOST_HTTPS_PORT}:443"
         links:
-            - php-fpm
+            - ${PHP_INTERPRETER}
         networks:
-            - laradock
+            - ${NGINX_NETWORK_NAME}
 
 ### Apache Server Containe10.0.75.1r #################################
 
     apache2:
         build:
-            context: ./apache2
+            context: ${APACHE2_BUILD_PATH}
             args:
                 - PHP_SOCKET=${APACHE2_PHP_SOCKET}
-        container_name: apache2
+        container_name: ${APACHE2_CONTAINER_NAME}
         volumes_from:
             - applications
         volumes:
@@ -112,41 +112,42 @@ services:
             - "${APACHE_HOST_HTTP_PORT}:80"
             - "${APACHE_HOST_HTTPS_PORT}:443"
         links:
-            - php-fpm
+            - ${PHP_INTERPRETER}
         networks:
-            - laradock
+            - ${APACHE2_NETWORK_NAME}
 
 ### HHVM Container ##########################################
-
     hhvm:
-        build: ./hhvm
-        container_name: hhvm
+        build: ${HHVM_BUILD_PATH}
+        container_name: ${HHVM_CONTAINER_NAME}
         volumes_from:
             - applications
+        # ports:
+        #     - "${HHVM_HOST_PORT}:9000"
         expose:
             - "9000"
         links:
             - workspace
         networks:
-            - laradock
+            - ${HHVM_NETWORK_NAME}
 
 ### MySQL Container #########################################
 
     mysql:
         build:
-            context: ./mysql
+            context: ${MYSQL_BUILD_PATH}
             args:
                 - MYSQL_DATABASE=${DB_DATABASE}
                 - MYSQL_USER=${DB_USERNAME}
                 - MYSQL_PASSWORD=${DB_PASSWORD}
                 - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-        container_name: mysql
+        container_name: ${MYSQL_CONTAINER_NAME}
         volumes:
             - mysql:/var/lib/mysql
         ports:
             - "${MYSQL_HOST_PORT}:3306"
         networks:
-            - laradock
+            - ${MYSQL_NETWORK_NAME}
 
 ### MariaDB Container #######################################
 
@@ -265,7 +266,7 @@ services:
         ports:
             - "${MEMCACHED_HOST_PORT}:11211"
         links:
-            - php-fpm
+            - ${PHP_INTERPRETER}
         networks:
             - ${MEMCACHED_NETWORK_NAME}
 
@@ -278,7 +279,7 @@ services:
             - "${BEANSTALKD_HOST_PORT}:11300"
         privileged: true
         links:
-            - php-fpm
+            - ${PHP_INTERPRETER}
         networks:
             - ${BEANSTALKD_NETWORK_NAME}
 
@@ -309,7 +310,7 @@ services:
             RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
             RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
         links:
-            - php-fpm
+            - ${PHP_INTERPRETER}
         networks:
             - ${RABBITMQ_NETWORK_NAME}
 
@@ -331,7 +332,7 @@ services:
             - ${CADDY_FILE_HOST_PATH}:/etc/Caddyfile
             - ${CADDY_LOGS_HOST_PATH}:/var/log/caddy
         links:
-            - php-fpm
+            - ${PHP_INTERPRETER}
         networks:
             - ${CADDY_NETWORK_NAME}
 
@@ -377,7 +378,7 @@ services:
             - "${ELASTICSEARCH_HOST_HTTP_PORT}:9200"
             - "${ELASTICSEARCH_HOST_TRANSPORT_PORT}:9300"
         links:
-            - php-fpm
+            - ${PHP_INTERPRETER}
         networks:
             - ${ELASTICSEARCH_NETWORK_NAME}
 

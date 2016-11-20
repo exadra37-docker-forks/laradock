@@ -117,6 +117,10 @@ Some examples...
 <br>
 `docker-compose up -d apache2 mysql redis`
 
+**NOTE:**
+
+* to switch between PHP Versions just look in `.env` file for `PHP_VERSION` and choose the one you want to run.
+* to use HHVM instead of normal Php Interpreter just search for `PHP_INTERPRETER` in `.env` file and select the desired one.
 
 Open your browser and visit `http://localhost` to see the initial page.
 
@@ -610,55 +614,33 @@ By default **PHP-FPM 7.0** is running.
 
 >The PHP-FPM is responsible of serving your application code, you don't have to change the PHP-CLI version if you are planing to run your application on different PHP-FPM version.
 
-#### A) Switch from PHP `7.0` to PHP `5.6`
+#### Switch from PHP `7.0` to PHP `5.6` or `5.5`
 
-1 - Open the `docker-compose.yml`.
+1 - Open the `.env` file.
 
-2 - Search for `Dockerfile-70` in the PHP container section.
+2 - Search for `PHP_VERSION` in the Docker Compose section:
 
-3 - Change the version number, by replacing `Dockerfile-70` with `Dockerfile-56`, like this:
+	# Switch between supported PHP versions... does not apply for HHVM.
+	# Please see composer.json in Laravel Framework for the minimum Php Version
+	#PHP_VERSION=55
+	#PHP_VERSION=56
+	PHP_VERSION=70
 
-```yml
-    php-fpm:
-        build:
-            context: ./php-fpm
-            dockerfile: Dockerfile-70
-    ...
-```
+3 - Now swicth to Php 5.6 or `5.5` by uncomment the desired line and comment out the Php `7.0` one, like this:
+
+	# Switch between supported PHP versions... does not apply for HHVM.
+	# Please see composer.json in Laravel Framework for the minimum Php Version
+	#PHP_VERSION=55
+	PHP_VERSION=56
+	#PHP_VERSION=70
 
 4 - Finally rebuild the container
 
 ```bash
-docker-compose build php
+docker-compose build --forcer-recreate php-fpm
 ```
 
 > For more details about the PHP base image, visit the [official PHP docker images](https://hub.docker.com/_/php/).
-
-
-#### B) Switch from PHP `7.0` or `5.6` to PHP `5.5`
-
-We do not natively support PHP 5.5 anymore, but you can get it in few steps:
-
-1 - Clone `https://github.com/LaraDock/php-fpm`.
-
-3 - Rename `Dockerfile-56` to `Dockerfile-55`.
-
-3 - Edit the file `FROM php:5.6-fpm` to `FROM php:5.5-fpm`.
-
-4 - Build an image from `Dockerfile-55`.
-
-5 - Open the `docker-compose.yml` file.
-
-6 - Point `php-fpm` to your `Dockerfile-55` file.
-
-
-
-
-
-
-
-
-
 
 
 
